@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FullBand — turn any song into a full mixer</title>
+<meta name="description" content="FullBand splits any song into vocals, drums, bass, guitar, piano and more — each on its own fader. Solo a part, loop a section, change key & tempo, record along, run a set live. Runs on your own GPU. No cloud, no account.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%23161616%22/><g fill=%22%23f0a43c%22><rect x=%2222%22 y=%2226%22 width=%2212%22 height=%2248%22 rx=%226%22/><rect x=%2244%22 y=%2242%22 width=%2212%22 height=%2232%22 rx=%226%22/><rect x=%2266%22 y=%2234%22 width=%2212%22 height=%2240%22 rx=%226%22/></g></svg>">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #141414;
+    --bg-2: #1a1a1a;
+    --panel: #232323;
+    --panel-2: #2a2a2a;
+    --raise: #333333;
+    --line: #383838;
+    --line-2: #4a4a4a;
+    --text: #dcdcdc;
+    --muted: #8f8f8f;
+    --dim: #5e5e5e;
+    --amber: #f0a43c;
+    --amber-hi: #ffc46a;
+    --blue: #5fb0ff;
+    --purple: #c98bff;
+    --green: #6ee29a;
+    --pink: #ff8fb0;
+    --cyan: #7fd6e0;
+    --ui: 'IBM Plex Sans', system-ui, sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: var(--ui); -webkit-font-smoothing: antialiased;
+    overflow-x: hidden; position: relative; min-height: 100vh;
+    line-height: 1.5;
+  }
+  a { color: var(--amber); text-decoration: none; }
+  ::selection { background: rgba(240,164,60,.35); }
+
+  /* atmosphere: amber glow + fine grain */
+  .glow-field {
+    position: fixed; top: -30%; left: 50%; width: 1200px; height: 1000px;
+    transform: translateX(-50%);
+    background: radial-gradient(circle, rgba(240,164,60,.10) 0%, transparent 60%);
+    filter: blur(20px); z-index: 0; pointer-events: none;
+  }
+  body::after {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 500; opacity: .035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .lamp {
+    width: 11px; height: 11px; border-radius: 50%; flex: 0 0 auto;
+    background: radial-gradient(circle at 35% 30%, #ffe2ae, var(--amber) 55%, #8a4d12);
+    box-shadow: 0 0 12px 2px rgba(240,164,60,.55);
+    animation: lampPulse 4.5s ease-in-out infinite;
+  }
+  @keyframes lampPulse { 0%,100%{box-shadow:0 0 12px 2px rgba(240,164,60,.5);} 50%{box-shadow:0 0 18px 4px rgba(240,164,60,.75);} }
+
+  /* ===== nav ===== */
+  nav {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px clamp(18px, 5vw, 64px);
+    max-width: 1240px; margin: 0 auto;
+  }
+  .brand { display: flex; align-items: center; gap: 11px; font-weight: 700; font-size: 18px; letter-spacing: -.01em; }
+  .brand b { font-weight: 700; }
+  .brand .amber { color: var(--amber); }
+  nav .links { display: flex; gap: 6px; align-items: center; }
+  nav .links a {
+    color: var(--muted); font-size: 13px; font-weight: 500; padding: 8px 13px; border-radius: 6px;
+    transition: color .15s, background .15s;
+  }
+  nav .links a:hover { color: var(--text); background: var(--panel); }
+  nav .links a.nav-cta { color: var(--amber-hi); }
+  @media (max-width: 720px){ nav .links a.hide-sm { display:none; } }
+
+  /* ===== hero ===== */
+  .hero {
+    position: relative; z-index: 2;
+    display: grid; grid-template-columns: 1.02fr 1.1fr; gap: 56px; align-items: center;
+    max-width: 1240px; margin: 0 auto; padding: 46px clamp(18px, 5vw, 64px) 80px;
+  }
+  @media (max-width: 960px){ .hero { grid-template-columns: 1fr; gap: 40px; padding-top: 16px; } }
+
+  .kicker {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--amber); background: rgba(240,164,60,.08);
+    border: 1px solid rgba(240,164,60,.28); border-radius: 999px; padding: 6px 13px;
+    animation: fadeUp .7s ease both;
+  }
+  .kicker .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 8px var(--amber); animation: blink 1.6s steps(1) infinite; }
+
+  h1.hero-title {
+    font-size: clamp(34px, 5vw, 58px); font-weight: 700; letter-spacing: -.025em; line-height: 1.05;
+    margin: 22px 0 0; color: #fff; animation: fadeUp .7s ease .08s both;
+  }
+  h1.hero-title .amber { color: var(--amber); }
+  .hero-sub {
+    font-size: 16.5px; line-height: 1.75; color: var(--muted); max-width: 48ch; margin: 22px 0 0;
+    animation: fadeUp .7s ease .16s both;
+  }
+  .hero-sub b { color: var(--text); font-weight: 600; }
+
+  .cta-row { display: flex; gap: 13px; margin-top: 32px; flex-wrap: wrap; align-items: center; animation: fadeUp .7s ease .24s both; }
+  .cta-primary {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-weight: 700; font-size: 14.5px; padding: 14px 22px; border-radius: 9px;
+    background: linear-gradient(180deg, var(--amber-hi), var(--amber)); color: #241303;
+    border: 1px solid #c07d1f; box-shadow: 0 6px 22px rgba(240,164,60,.28), inset 0 1px 0 rgba(255,255,255,.35);
+    transition: transform .14s ease, box-shadow .3s ease;
+  }
+  .cta-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(240,164,60,.4), inset 0 1px 0 rgba(255,255,255,.35); }
+  .cta-secondary {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-weight: 600; font-size: 14.5px; padding: 14px 18px; border-radius: 9px;
+    color: var(--text); border: 1px solid var(--line-2); background: linear-gradient(180deg, var(--raise), var(--panel-2));
+    transition: border-color .15s, color .15s;
+  }
+  .cta-secondary:hover { border-color: var(--amber); color: var(--amber-hi); }
+  .req-note { margin-top: 16px; font-family: var(--mono); font-size: 12px; color: var(--dim); animation: fadeUp .7s ease .3s both; }
+
+  /* ===== mixer mockup ===== */
+  .mixer-wrap { animation: fadeUp .8s ease .2s both; }
+  .mixer-card {
+    background: linear-gradient(180deg, #1e1e1e, #171717);
+    border: 1px solid var(--line); border-radius: 14px; overflow: hidden;
+    box-shadow: 0 30px 70px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.04);
+  }
+  .mx-top {
+    display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+    background: linear-gradient(180deg, var(--panel-2), var(--panel)); border-bottom: 1px solid #000;
+  }
+  .mx-play {
+    width: 34px; height: 34px; border-radius: 7px; border: 1px solid rgba(240,164,60,.5);
+    background: var(--raise); color: var(--amber-hi); font-size: 15px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .mx-clock { font-family: var(--mono); font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .mx-title { flex: 1; min-width: 0; font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mx-chip { font-family: var(--mono); font-size: 11px; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 5px 9px; }
+  @media (max-width: 460px){ .mx-title { display:none; } }
+
+  .mx-lanes { position: relative; }
+  .mx-lane { display: flex; align-items: stretch; height: 62px; border-bottom: 1px solid #000; }
+  .mx-lane:last-child { border-bottom: none; }
+  .mx-lane:nth-child(even) .mx-wave { background: #131313; }
+  .mx-tcp {
+    width: 148px; flex: 0 0 auto; display: grid; grid-template-columns: 4px 1fr; gap: 0;
+    background: linear-gradient(180deg, var(--panel), var(--panel-2)); border-right: 1px solid #000;
+  }
+  @media (max-width: 520px){ .mx-tcp { width: 116px; } }
+  .mx-color { grid-row: 1/3; background: linear-gradient(180deg, var(--cap), color-mix(in srgb, var(--cap) 65%, #000)); box-shadow: 2px 0 9px -3px var(--cap); }
+  .mx-tbody { padding: 8px 9px; display: flex; flex-direction: column; gap: 6px; min-width: 0; justify-content: center; }
+  .mx-row1 { display: flex; align-items: center; gap: 6px; }
+  .mx-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; font-size: 12.5px; }
+  .mx-tag { font-family: var(--mono); font-size: 8.5px; font-weight: 600; letter-spacing: .06em; color: var(--cap); background: color-mix(in srgb, var(--cap) 15%, transparent); border: 1px solid color-mix(in srgb, var(--cap) 45%, var(--line-2)); border-radius: 3px; padding: 1px 4px; }
+  .mx-ms { display: flex; gap: 4px; }
+  .mx-ms b { width: 18px; height: 16px; border-radius: 3px; font-family: var(--mono); font-size: 9px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; background: var(--raise); color: var(--dim); border: 1px solid var(--line-2); }
+  .mx-ms b.m-on { background: #e2553a; color: #1d0a05; border-color: #e2553a; }
+  .mx-ms b.s-on { background: var(--amber); color: #241303; border-color: var(--amber); }
+  .mx-fader { flex: 1; height: 4px; border-radius: 2px; background: #0c0c0c; position: relative; }
+  .mx-fader i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 2px; background: var(--cap); }
+  .mx-fader b { position: absolute; top: 50%; width: 9px; height: 13px; border-radius: 2px; background: linear-gradient(180deg,#5a5a5a,#2e2e2e); border: 1px solid #000; transform: translate(-50%,-50%); box-shadow: 0 0 8px -2px var(--cap); }
+  .mx-wave { position: relative; flex: 1 1 auto; background: #161616; overflow: hidden; }
+  .mx-wave canvas { display: block; width: 100%; height: 100%; }
+  .mx-playhead { position: absolute; top: 0; bottom: 0; left: 148px; width: 0; border-left: 1.5px solid var(--amber); box-shadow: 0 0 8px rgba(240,164,60,.6); pointer-events: none; }
+  .mx-playhead::before { content:''; position:absolute; top:0; left:-4px; border:5px solid transparent; border-top-color: var(--amber); border-bottom:0; }
+  @media (max-width: 520px){ .mx-playhead { left: 116px; } }
+
+  /* ===== sections ===== */
+  section { position: relative; z-index: 2; max-width: 1180px; margin: 0 auto; padding: 84px clamp(18px,5vw,64px); }
+  .section-head { max-width: 640px; margin: 0 auto 50px; text-align: center; }
+  .section-tag { font-family: var(--mono); font-size: 11.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--amber); }
+  .section-head h2 { font-size: clamp(24px, 3.4vw, 34px); font-weight: 700; letter-spacing: -.02em; color: #fff; margin: 14px 0 0; }
+  .section-head p { margin-top: 16px; font-size: 15.5px; line-height: 1.75; color: var(--muted); }
+
+  .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
+  .feature-card {
+    padding: 24px 22px; border-radius: 12px; background: linear-gradient(180deg, var(--panel), var(--bg-2));
+    border: 1px solid var(--line); transition: transform .25s ease, border-color .25s ease;
+  }
+  .feature-card:hover { transform: translateY(-4px); border-color: var(--line-2); }
+  .feature-glyph {
+    width: 42px; height: 42px; border-radius: 9px; display: flex; align-items: center; justify-content: center;
+    font-size: 20px; margin-bottom: 15px; background: rgba(240,164,60,.1); border: 1px solid rgba(240,164,60,.24); color: var(--amber-hi);
+  }
+  .feature-card h3 { font-size: 16px; font-weight: 600; color: #fff; margin: 0 0 9px; }
+  .feature-card p { font-size: 13.5px; line-height: 1.7; margin: 0; color: var(--muted); }
+
+  /* ===== how it works ===== */
+  .how { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+  @media (max-width: 860px){ .how { grid-template-columns: 1fr; gap: 28px; } }
+  .how-copy h2 { font-size: clamp(24px,3.2vw,32px); font-weight: 700; letter-spacing: -.02em; color: #fff; margin: 14px 0 0; }
+  .how-copy p { margin-top: 16px; font-size: 15px; line-height: 1.8; color: var(--muted); }
+  .privacy-badges { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .privacy-badges span { font-family: var(--mono); font-size: 11.5px; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; }
+  .steps { background: linear-gradient(180deg, var(--panel), var(--bg-2)); border: 1px solid var(--line); border-radius: 12px; padding: 10px 24px; }
+  .step-row { display: flex; gap: 16px; padding: 18px 2px; border-bottom: 1px solid var(--line); font-size: 14px; line-height: 1.6; }
+  .step-row:last-child { border-bottom: none; }
+  .step-num { font-family: var(--mono); font-weight: 600; font-size: 13px; color: var(--amber); flex-shrink: 0; width: 26px; }
+  .step-row b { color: #fff; font-weight: 600; }
+  .step-row code { font-family: var(--mono); font-size: 12.5px; color: var(--amber-hi); background: #000; border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; }
+
+  /* ===== support ===== */
+  .support-panel {
+    display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 28px;
+    padding: 34px clamp(20px,4vw,42px); border-radius: 14px;
+    background: linear-gradient(120deg, #241a10, var(--bg-2)); border: 1px solid rgba(240,164,60,.22);
+  }
+  @media (max-width: 760px){ .support-panel { grid-template-columns: 1fr; text-align: center; justify-items: center; } }
+  .support-glyph { width: 60px; height: 60px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 28px; border-radius: 12px; background: rgba(240,164,60,.12); border: 1px solid rgba(240,164,60,.3); }
+  .support-copy h2 { font-size: clamp(19px,2.4vw,25px); font-weight: 700; color: #fff; margin: 12px 0 0; letter-spacing: -.01em; }
+  .support-copy p { margin-top: 12px; font-size: 14px; line-height: 1.75; color: var(--muted); max-width: 54ch; }
+
+  footer { position: relative; z-index: 2; text-align: center; padding: 48px 20px 66px; font-size: 12.5px; color: var(--dim); }
+  footer .brand { justify-content: center; margin-bottom: 14px; font-size: 16px; }
+  footer a { color: var(--muted); }
+  footer a:hover { color: var(--amber); }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  @keyframes blink { 0%,49%{opacity:1;} 50%,100%{opacity:0;} }
+  @media (prefers-reduced-motion: reduce){ *,*::before,*::after{ animation-duration:.001ms!important; animation-iteration-count:1!important; } }
+</style>
+</head>
+<body>
+
+<div class="glow-field"></div>
+
+<nav>
+  <div class="brand"><span class="lamp"></span><b>Full<span class="amber">Band</span></b></div>
+  <div class="links">
+    <a href="#features" class="hide-sm">Features</a>
+    <a href="#how" class="hide-sm">How it works</a>
+    <a href="https://github.com/ohgahbriel/FullBand-app" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://ko-fi.com/epicdev" target="_blank" rel="noopener" class="nav-cta">☕ Support</a>
+  </div>
+</nav>
+
+<section class="hero" style="padding-top:22px;">
+  <div class="hero-copy">
+    <div class="kicker"><span class="dot"></span> Windows · Runs on your GPU · Open source</div>
+    <h1 class="hero-title">Turn any song into<br><span class="amber">a full mixer.</span></h1>
+    <p class="hero-sub">
+      Paste a link and FullBand splits the track into <b>vocals, drums, bass, guitar, piano</b> and more —
+      each on its own fader. <b>Solo</b> a part, <b>loop</b> a section, drop the <b>key</b>, slow the <b>tempo</b>,
+      and <b>record yourself</b> over the top. It all runs on your own machine — nothing gets uploaded.
+    </p>
+    <div class="cta-row">
+      <a class="cta-primary" href="https://github.com/ohgahbriel/FullBand-app" target="_blank" rel="noopener">⬇ Get it on GitHub</a>
+      <a class="cta-secondary" href="#how">How to run it ↓</a>
+    </div>
+    <div class="req-note">Clone it and run one command (setup.bat) — no build tools to wrestle. Best with an NVIDIA GPU; works on CPU, just slower.</div>
+  </div>
+
+  <div class="mixer-wrap">
+    <div class="mixer-card">
+      <div class="mx-top">
+        <span class="lamp"></span>
+        <button class="mx-play" id="mxPlay">⏸</button>
+        <span class="mx-clock" id="mxClock">1:24</span>
+        <span class="mx-title">Helloween — I Want Out</span>
+        <span class="mx-chip">KEY D</span>
+        <span class="mx-chip">148 BPM</span>
+      </div>
+      <div class="mx-lanes" id="mxLanes">
+        <div class="mx-playhead" id="mxPlayhead"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="section-head">
+    <div class="section-tag">◢ What it does</div>
+    <h2>A real mixing desk for any track.</h2>
+    <p>Not a vocal remover with two sliders — a full multitrack you can actually play with.</p>
+  </div>
+  <div class="feature-grid" id="features-grid">
+    <div class="feature-card"><div class="feature-glyph">✂</div><h3>6-stem separation</h3><p>An AI model (Demucs) splits the song into vocals, drums, bass, guitar, piano and other — cleanly, on your GPU.</p></div>
+    <div class="feature-card"><div class="feature-glyph">🎚</div><h3>A fader per instrument</h3><p>Volume, mute and solo on every channel, with a live level meter and a master — mix it exactly how you want.</p></div>
+    <div class="feature-card"><div class="feature-glyph">♯</div><h3>Transpose &amp; time-stretch</h3><p>Change the key and the tempo independently, in real time. Drop it a step, slow it to half-speed to learn a part.</p></div>
+    <div class="feature-card"><div class="feature-glyph">↺</div><h3>A–B loop &amp; count-in</h3><p>Set two points and loop a hard section until it sticks, with a one-bar count-in before playback.</p></div>
+    <div class="feature-card"><div class="feature-glyph">●</div><h3>Record along</h3><p>Add a track, arm it, and play over the stems. Your take is captured in sync and sits right in the mixer.</p></div>
+    <div class="feature-card"><div class="feature-glyph">▶</div><h3>Stage mode</h3><p>A full-screen, big-button player for playing live — big Prev / Play / Next, key &amp; tempo, and a song list.</p></div>
+    <div class="feature-card"><div class="feature-glyph">♪</div><h3>Chords &amp; synced lyrics</h3><p>Chord-per-beat and time-synced lyrics scroll as the song plays — and transpose right along with the key.</p></div>
+    <div class="feature-card"><div class="feature-glyph">⬇</div><h3>Export it</h3><p>Bounce your mix or every isolated stem to MP3, WAV, FLAC and more — including a click/practice split.</p></div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="how">
+    <div class="how-copy">
+      <div class="section-tag">◢ How it runs</div>
+      <h2>It all happens on your machine.</h2>
+      <p>
+        FullBand is a small local engine plus a mixer. The engine (Demucs on your GPU) does the heavy
+        separation; the mixer runs in your browser or as a native Windows app. There's no cloud step,
+        no upload, and no account — the song never leaves your computer.
+      </p>
+      <div class="privacy-badges">
+        <span>No cloud</span><span>No upload</span><span>No account</span><span>No ads</span><span>Open source</span>
+      </div>
+    </div>
+    <div class="steps">
+      <div class="step-row"><span class="step-num">01</span><span>Clone the repo from GitHub — or download the ZIP (green <b>Code ▸ Download ZIP</b>).</span></div>
+      <div class="step-row"><span class="step-num">02</span><span>Run <code>setup.bat</code> — one command installs Python, the AI model, ffmpeg and the UI.</span></div>
+      <div class="step-row"><span class="step-num">03</span><span>Run <code>run.bat</code> — FullBand opens at <code>localhost:8000</code> (or launch the desktop app).</span></div>
+      <div class="step-row"><span class="step-num">04</span><span>Paste a link, hit <b>Separate</b>, and start mixing.</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="support" style="padding-top:20px;">
+  <div class="support-panel">
+    <div class="support-glyph">☕</div>
+    <div class="support-copy">
+      <div class="section-tag">◢ Keep it free</div>
+      <h2>No ads. No accounts. No subscription.</h2>
+      <p>FullBand is free and open source, and it'll stay that way. If it helped you learn a solo, nail a set, or just mess around with your favourite songs, a coffee keeps the lights on.</p>
+    </div>
+    <a class="cta-primary" href="https://ko-fi.com/epicdev" target="_blank" rel="noopener">☕ Buy me a coffee</a>
+  </div>
+</section>
+
+<footer>
+  <div class="brand"><span class="lamp"></span><b>Full<span class="amber">Band</span></b></div>
+  <div>Runs locally. No trackers, no cloud, no account.</div>
+  <div style="margin-top:10px;">
+    <a href="https://github.com/ohgahbriel/FullBand-app" target="_blank" rel="noopener">github.com/ohgahbriel/FullBand-app</a>
+    <span style="opacity:.4;margin:0 8px;">·</span>
+    <a href="https://ko-fi.com/epicdev" target="_blank" rel="noopener">ko-fi.com/epicdev</a>
+  </div>
+  <div style="margin-top:14px; font-size:11.5px; color:var(--dim);">An <span style="color:var(--muted)">Epicdev</span> project</div>
+</footer>
+
+<script>
+  // ---- build the mixer mockup lanes with animated waveforms ----
+  const LANES = [
+    { name:"Drums",  tag:"DRM", cap:"#5fb0ff", fader:78, seed:3 },
+    { name:"Bass",   tag:"BAS", cap:"#c98bff", fader:64, seed:7, mute:true },
+    { name:"Guitar", tag:"GTR", cap:"#6ee29a", fader:82, seed:11, solo:true },
+    { name:"Piano",  tag:"PNO", cap:"#7fd6e0", fader:56, seed:5 },
+    { name:"Vocals", tag:"VOX", cap:"#ff8fb0", fader:70, seed:13 },
+  ];
+  function hexA(hex,a){const m=hex.replace('#','');return `rgba(${parseInt(m.slice(0,2),16)},${parseInt(m.slice(2,4),16)},${parseInt(m.slice(4,6),16)},${a})`;}
+  function peaks(n, seed){ const p=new Float32Array(n); let x=seed*137;
+    for(let i=0;i<n;i++){ x=(x*9301+49297)%233280; const r=x/233280;
+      const env=0.32+0.5*Math.abs(Math.sin(i/n*Math.PI*(seed*0.6)))+0.14*Math.sin(i/5);
+      p[i]=Math.min(1,Math.max(0.03, r*0.55*env+0.12)); } return p; }
+  function drawWave(c, pk, cap){
+    const dpr=window.devicePixelRatio||1, w=c.clientWidth, h=c.clientHeight;
+    if(!w||!h) return;
+    c.width=Math.round(w*dpr); c.height=Math.round(h*dpr);
+    const ctx=c.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+    const mid=h/2, maxA=h*0.44, n=pk.length, step=w/n;
+    ctx.beginPath(); ctx.moveTo(0,mid);
+    for(let i=0;i<n;i++) ctx.lineTo(i*step, mid-pk[i]*maxA);
+    ctx.lineTo(w,mid);
+    for(let i=n-1;i>=0;i--) ctx.lineTo(i*step, mid+pk[i]*maxA);
+    ctx.closePath();
+    const g=ctx.createLinearGradient(0,mid-maxA,0,mid+maxA);
+    g.addColorStop(0,hexA(cap,.14)); g.addColorStop(.5,hexA(cap,.52)); g.addColorStop(1,hexA(cap,.14));
+    ctx.fillStyle=g; ctx.fill();
+    ctx.strokeStyle=hexA(cap,.9); ctx.lineWidth=1; ctx.lineJoin='round';
+    for(const s of [-1,1]){ ctx.beginPath(); for(let i=0;i<n;i++){const x=i*step,y=mid+s*pk[i]*maxA; i?ctx.lineTo(x,y):ctx.moveTo(x,y);} ctx.stroke(); }
+    ctx.fillStyle='rgba(255,255,255,.04)'; ctx.fillRect(0,mid,w,1);
+  }
+  const lanesEl = document.getElementById('mxLanes');
+  const playhead = document.getElementById('mxPlayhead');
+  const canvases = [];
+  LANES.forEach(L => {
+    const lane = document.createElement('div');
+    lane.className = 'mx-lane'; lane.style.setProperty('--cap', L.cap);
+    lane.innerHTML = `
+      <div class="mx-tcp"><div class="mx-color"></div><div class="mx-tbody">
+        <div class="mx-row1"><span class="mx-name">${L.name}</span><span class="mx-tag">${L.tag}</span>
+          <span class="mx-ms"><b class="${L.mute?'m-on':''}">M</b><b class="${L.solo?'s-on':''}">S</b></span></div>
+        <div class="mx-fader"><i style="width:${L.fader}%"></i><b style="left:${L.fader}%"></b></div>
+      </div></div>
+      <div class="mx-wave"><canvas></canvas></div>`;
+    lanesEl.insertBefore(lane, playhead);
+    canvases.push({ c: lane.querySelector('canvas'), pk: peaks(360, L.seed), cap: L.cap });
+  });
+  function paintAll(){ canvases.forEach(o => drawWave(o.c, o.pk, o.cap)); }
+  requestAnimationFrame(paintAll);
+  let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(paintAll, 150); });
+
+  // ---- sweeping playhead + ticking clock ----
+  let playing = true, pos = 0.24;
+  const total = 227; // 3:47 in seconds
+  const fmt = s => Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');
+  function laneWidth(){ const any = lanesEl.querySelector('.mx-wave'); return any ? any.getBoundingClientRect().width : 0; }
+  function tcpWidth(){ const t = lanesEl.querySelector('.mx-tcp'); return t ? t.getBoundingClientRect().width : 148; }
+  function sweep(){
+    if(playing){ pos += 0.0009; if(pos>1) pos=0; }
+    playhead.style.transform = `translateX(${pos*laneWidth()}px)`;
+    document.getElementById('mxClock').textContent = fmt(pos*total);
+    requestAnimationFrame(sweep);
+  }
+  requestAnimationFrame(sweep);
+  document.getElementById('mxPlay').addEventListener('click', function(){
+    playing = !playing; this.textContent = playing ? '⏸' : '▶';
+  });
+
+  // ---- scroll-reveal for feature cards + steps ----
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if(e.isIntersecting){ e.target.style.opacity=1; e.target.style.transform='none'; io.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.feature-card, .steps, .support-panel').forEach((el,i) => {
+    el.style.opacity=0; el.style.transform='translateY(18px)';
+    el.style.transition=`opacity .5s ease ${(i%4)*0.06}s, transform .5s ease ${(i%4)*0.06}s`;
+    io.observe(el);
+  });
+</script>
+
+</body>
+</html>
