@@ -15,13 +15,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
       - name: Deploy to Netlify (production)
-        run: |
-          npm install -g netlify-cli@26
-          netlify deploy --dir . --prod --site "$NETLIFY_SITE_ID" --auth "$NETLIFY_AUTH_TOKEN"
+        uses: nwtgck/actions-netlify@v3.0
+        with:
+          publish-dir: '.'
+          production-deploy: true
+          deploy-message: "Auto-deploy ${{ github.sha }}"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          enable-pull-request-comment: false
+          enable-commit-comment: false
         env:
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
