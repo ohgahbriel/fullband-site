@@ -79,6 +79,10 @@
   }
   nav .links a:hover { color: var(--text); background: var(--panel); }
   nav .links a.nav-cta { color: var(--amber-hi); }
+  .lang { display: inline-flex; margin-left: 6px; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+  .lang button { background: transparent; border: 0; color: var(--muted); font: 600 12px var(--mono); padding: 6px 9px; cursor: pointer; letter-spacing: .04em; transition: background .15s, color .15s; }
+  .lang button.active { background: var(--amber); color: #241303; }
+  .lang button:not(.active):hover { color: var(--text); background: var(--panel); }
   @media (max-width: 720px){ nav .links a.hide-sm { display:none; } }
 
   /* ===== hero ===== */
@@ -237,27 +241,31 @@
 <nav>
   <div class="brand"><span class="lamp"></span><b>Full<span class="amber">Band</span></b></div>
   <div class="links">
-    <a href="#features" class="hide-sm">Features</a>
-    <a href="#how" class="hide-sm">How it works</a>
+    <a href="#features" class="hide-sm" data-i18n="nav.features">Features</a>
+    <a href="#how" class="hide-sm" data-i18n="nav.how">How it works</a>
     <a href="https://github.com/ohgahbriel/FullBand-app" target="_blank" rel="noopener">GitHub</a>
-    <a href="https://ko-fi.com/epicdev" target="_blank" rel="noopener" class="nav-cta">☕ Support</a>
+    <a href="https://ko-fi.com/epicdev" target="_blank" rel="noopener" class="nav-cta" data-i18n="nav.support">☕ Support</a>
+    <div class="lang" id="lang">
+      <button type="button" data-lang="en">EN</button>
+      <button type="button" data-lang="pt">BR</button>
+    </div>
   </div>
 </nav>
 
 <section class="hero" style="padding-top:22px;">
   <div class="hero-copy">
-    <div class="kicker"><span class="dot"></span> Windows · Runs on your GPU · Open source</div>
-    <h1 class="hero-title">Turn any song into<br><span class="amber">a full mixer.</span></h1>
-    <p class="hero-sub">
+    <div class="kicker"><span class="dot"></span> <span data-i18n="hero.kicker">Windows · Runs on your GPU · Open source</span></div>
+    <h1 class="hero-title" data-i18n="hero.title">Turn any song into<br><span class="amber">a full mixer.</span></h1>
+    <p class="hero-sub" data-i18n="hero.sub">
       Paste a link and FullBand splits the track into <b>vocals, drums, bass, guitar, piano</b> and more —
       each on its own fader. <b>Solo</b> a part, <b>loop</b> a section, drop the <b>key</b>, slow the <b>tempo</b>,
       and <b>record yourself</b> over the top. It all runs on your own machine — nothing gets uploaded.
     </p>
     <div class="cta-row">
-      <a class="cta-primary" href="https://github.com/ohgahbriel/FullBand-app" target="_blank" rel="noopener">⬇ Get it on GitHub</a>
-      <a class="cta-secondary" href="#how">How to run it ↓</a>
+      <a class="cta-primary" href="https://github.com/ohgahbriel/FullBand-app" target="_blank" rel="noopener" data-i18n="hero.cta1">⬇ Get it on GitHub</a>
+      <a class="cta-secondary" href="#how" data-i18n="hero.cta2">How to run it ↓</a>
     </div>
-    <div class="req-note">Clone it and run one command (setup.bat) — no build tools to wrestle. Best with an NVIDIA GPU; works on CPU, just slower.</div>
+    <div class="req-note" data-i18n="hero.req">Clone it and run one command (setup.bat) — no build tools to wrestle. Best with an NVIDIA GPU; works on CPU, just slower.</div>
   </div>
 
   <div class="mixer-wrap">
@@ -279,41 +287,41 @@
 
 <section id="features">
   <div class="section-head">
-    <div class="section-tag">◢ What it does</div>
-    <h2>A real mixing desk for any track.</h2>
-    <p>Not a vocal remover with two sliders — a full multitrack you can actually play with.</p>
+    <div class="section-tag" data-i18n="feat.tag">◢ What it does</div>
+    <h2 data-i18n="feat.h2">A real mixing desk for any track.</h2>
+    <p data-i18n="feat.p">Not a vocal remover with two sliders — a full multitrack you can actually play with.</p>
   </div>
   <div class="feature-grid" id="features-grid">
-    <div class="feature-card"><div class="feature-glyph">✂</div><h3>6-stem separation</h3><p>An AI model (Demucs) splits the song into vocals, drums, bass, guitar, piano and other — cleanly, on your GPU.</p></div>
-    <div class="feature-card"><div class="feature-glyph">🎚</div><h3>A fader per instrument</h3><p>Volume, mute and solo on every channel, with a live level meter and a master — mix it exactly how you want.</p></div>
-    <div class="feature-card"><div class="feature-glyph">♯</div><h3>Transpose &amp; time-stretch</h3><p>Change the key and the tempo independently, in real time. Drop it a step, slow it to half-speed to learn a part.</p></div>
-    <div class="feature-card"><div class="feature-glyph">↺</div><h3>A–B loop &amp; count-in</h3><p>Set two points and loop a hard section until it sticks, with a one-bar count-in before playback.</p></div>
-    <div class="feature-card"><div class="feature-glyph">●</div><h3>Record along</h3><p>Add a track, arm it, and play over the stems. Your take is captured in sync and sits right in the mixer.</p></div>
-    <div class="feature-card"><div class="feature-glyph">▶</div><h3>Stage mode</h3><p>A full-screen, big-button player for playing live — big Prev / Play / Next, key &amp; tempo, and a song list.</p></div>
-    <div class="feature-card"><div class="feature-glyph">♪</div><h3>Chords &amp; synced lyrics</h3><p>Chord-per-beat and time-synced lyrics scroll as the song plays — and transpose right along with the key.</p></div>
-    <div class="feature-card"><div class="feature-glyph">⬇</div><h3>Export it</h3><p>Bounce your mix or every isolated stem to MP3, WAV, FLAC and more — including a click/practice split.</p></div>
+    <div class="feature-card"><div class="feature-glyph">✂</div><h3 data-i18n="feat.c1t">6-stem separation</h3><p data-i18n="feat.c1d">An AI model (Demucs) splits the song into vocals, drums, bass, guitar, piano and other — cleanly, on your GPU.</p></div>
+    <div class="feature-card"><div class="feature-glyph">🎚</div><h3 data-i18n="feat.c2t">A fader per instrument</h3><p data-i18n="feat.c2d">Volume, mute and solo on every channel, with a live level meter and a master — mix it exactly how you want.</p></div>
+    <div class="feature-card"><div class="feature-glyph">♯</div><h3 data-i18n="feat.c3t">Transpose &amp; time-stretch</h3><p data-i18n="feat.c3d">Change the key and the tempo independently, in real time. Drop it a step, slow it to half-speed to learn a part.</p></div>
+    <div class="feature-card"><div class="feature-glyph">↺</div><h3 data-i18n="feat.c4t">A–B loop &amp; count-in</h3><p data-i18n="feat.c4d">Set two points and loop a hard section until it sticks, with a one-bar count-in before playback.</p></div>
+    <div class="feature-card"><div class="feature-glyph">●</div><h3 data-i18n="feat.c5t">Record along</h3><p data-i18n="feat.c5d">Add a track, arm it, and play over the stems. Your take is captured in sync and sits right in the mixer.</p></div>
+    <div class="feature-card"><div class="feature-glyph">▶</div><h3 data-i18n="feat.c6t">Stage mode</h3><p data-i18n="feat.c6d">A full-screen, big-button player for playing live — big Prev / Play / Next, key &amp; tempo, and a song list.</p></div>
+    <div class="feature-card"><div class="feature-glyph">♪</div><h3 data-i18n="feat.c7t">Chords &amp; synced lyrics</h3><p data-i18n="feat.c7d">Chord-per-beat and time-synced lyrics scroll as the song plays — and transpose right along with the key.</p></div>
+    <div class="feature-card"><div class="feature-glyph">⬇</div><h3 data-i18n="feat.c8t">Export it</h3><p data-i18n="feat.c8d">Bounce your mix or every isolated stem to MP3, WAV, FLAC and more — including a click/practice split.</p></div>
   </div>
 </section>
 
 <section id="how">
   <div class="how">
     <div class="how-copy">
-      <div class="section-tag">◢ How it runs</div>
-      <h2>It all happens on your machine.</h2>
-      <p>
+      <div class="section-tag" data-i18n="how.tag">◢ How it runs</div>
+      <h2 data-i18n="how.h2">It all happens on your machine.</h2>
+      <p data-i18n="how.p">
         FullBand is a small local engine plus a mixer. The engine (Demucs on your GPU) does the heavy
         separation; the mixer runs in your browser or as a native Windows app. There's no cloud step,
         no upload, and no account — the song never leaves your computer.
       </p>
       <div class="privacy-badges">
-        <span>No cloud</span><span>No upload</span><span>No account</span><span>No ads</span><span>Open source</span>
+        <span data-i18n="how.b1">No cloud</span><span data-i18n="how.b2">No upload</span><span data-i18n="how.b3">No account</span><span data-i18n="how.b4">No ads</span><span data-i18n="how.b5">Open source</span>
       </div>
     </div>
     <div class="steps">
-      <div class="step-row"><span class="step-num">01</span><span>Clone the repo from GitHub — or download the ZIP (green <b>Code ▸ Download ZIP</b>).</span></div>
-      <div class="step-row"><span class="step-num">02</span><span>Run <code>setup.bat</code> — one command installs Python, the AI model, ffmpeg and the UI.</span></div>
-      <div class="step-row"><span class="step-num">03</span><span>Run <code>run.bat</code> — FullBand opens at <code>localhost:8000</code> (or launch the desktop app).</span></div>
-      <div class="step-row"><span class="step-num">04</span><span>Paste a link, hit <b>Separate</b>, and start mixing.</span></div>
+      <div class="step-row"><span class="step-num">01</span><span data-i18n="how.s1">Clone the repo from GitHub — or download the ZIP (green <b>Code ▸ Download ZIP</b>).</span></div>
+      <div class="step-row"><span class="step-num">02</span><span data-i18n="how.s2">Run <code>setup.bat</code> — one command installs Python, the AI model, ffmpeg and the UI.</span></div>
+      <div class="step-row"><span class="step-num">03</span><span data-i18n="how.s3">Run <code>run.bat</code> — FullBand opens at <code>localhost:8000</code> (or launch the desktop app).</span></div>
+      <div class="step-row"><span class="step-num">04</span><span data-i18n="how.s4">Paste a link, hit <b>Separate</b>, and start mixing.</span></div>
     </div>
   </div>
 </section>
@@ -322,26 +330,101 @@
   <div class="support-panel">
     <div class="support-glyph">☕</div>
     <div class="support-copy">
-      <div class="section-tag">◢ Keep it free</div>
-      <h2>No ads. No accounts. No subscription.</h2>
-      <p>FullBand is free and open source, and it'll stay that way. If it helped you learn a solo, nail a set, or just mess around with your favourite songs, a coffee keeps the lights on.</p>
+      <div class="section-tag" data-i18n="sup.tag">◢ Keep it free</div>
+      <h2 data-i18n="sup.h2">No ads. No accounts. No subscription.</h2>
+      <p data-i18n="sup.p">FullBand is free and open source, and it'll stay that way. If it helped you learn a solo, nail a set, or just mess around with your favourite songs, a coffee keeps the lights on.</p>
     </div>
-    <a class="cta-primary" href="https://ko-fi.com/epicdev" target="_blank" rel="noopener">☕ Buy me a coffee</a>
+    <a class="cta-primary" href="https://ko-fi.com/epicdev" target="_blank" rel="noopener" data-i18n="sup.cta">☕ Buy me a coffee</a>
   </div>
 </section>
 
 <footer>
   <div class="brand"><span class="lamp"></span><b>Full<span class="amber">Band</span></b></div>
-  <div>Runs locally. No trackers, no cloud, no account.</div>
+  <div data-i18n="foot.tag">Runs locally. No trackers, no cloud, no account.</div>
   <div style="margin-top:10px;">
     <a href="https://github.com/ohgahbriel/FullBand-app" target="_blank" rel="noopener">github.com/ohgahbriel/FullBand-app</a>
     <span style="opacity:.4;margin:0 8px;">·</span>
     <a href="https://ko-fi.com/epicdev" target="_blank" rel="noopener">ko-fi.com/epicdev</a>
   </div>
-  <div style="margin-top:14px; font-size:11.5px; color:var(--dim);">An <span style="color:var(--muted)">Epicdev</span> project</div>
+  <div style="margin-top:14px; font-size:11.5px; color:var(--dim);" data-i18n="foot.epic">An <span style="color:var(--muted)">Epicdev</span> project</div>
 </footer>
 
 <script>
+  // ---- EN / BR language toggle ----
+  const I18N = {
+    "nav.features": { en: "Features", pt: "Recursos" },
+    "nav.how": { en: "How it works", pt: "Como funciona" },
+    "nav.support": { en: "☕ Support", pt: "☕ Apoiar" },
+    "hero.kicker": { en: "Windows · Runs on your GPU · Open source", pt: "Windows · Roda na sua GPU · Código aberto" },
+    "hero.title": { en: 'Turn any song into<br><span class="amber">a full mixer.</span>', pt: 'Transforme qualquer música<br><span class="amber">num mixer completo.</span>' },
+    "hero.sub": {
+      en: 'Paste a link and FullBand splits the track into <b>vocals, drums, bass, guitar, piano</b> and more — each on its own fader. <b>Solo</b> a part, <b>loop</b> a section, drop the <b>key</b>, slow the <b>tempo</b>, and <b>record yourself</b> over the top. It all runs on your own machine — nothing gets uploaded.',
+      pt: 'Cole um link e o FullBand separa a faixa em <b>vocais, bateria, baixo, guitarra, piano</b> e mais — cada um no seu próprio fader. Deixe uma parte em <b>solo</b>, repita um trecho em <b>loop</b>, mude o <b>tom</b>, diminua o <b>andamento</b> e <b>grave você mesmo</b> por cima. Tudo roda no seu computador — nada é enviado.'
+    },
+    "hero.cta1": { en: "⬇ Get it on GitHub", pt: "⬇ Baixar no GitHub" },
+    "hero.cta2": { en: "How to run it ↓", pt: "Como rodar ↓" },
+    "hero.req": {
+      en: "Clone it and run one command (setup.bat) — no build tools to wrestle. Best with an NVIDIA GPU; works on CPU, just slower.",
+      pt: "Clone e rode um comando (setup.bat) — sem ferramentas de build pra brigar. Melhor com GPU NVIDIA; funciona na CPU, só mais devagar."
+    },
+    "feat.tag": { en: "◢ What it does", pt: "◢ O que faz" },
+    "feat.h2": { en: "A real mixing desk for any track.", pt: "Uma mesa de mixagem de verdade pra qualquer faixa." },
+    "feat.p": { en: "Not a vocal remover with two sliders — a full multitrack you can actually play with.", pt: "Não é um removedor de vocal com dois controles — é um multipista completo pra brincar de verdade." },
+    "feat.c1t": { en: "6-stem separation", pt: "Separação em 6 faixas" },
+    "feat.c1d": { en: "An AI model (Demucs) splits the song into vocals, drums, bass, guitar, piano and other — cleanly, on your GPU.", pt: "Uma IA (Demucs) divide a música em vocais, bateria, baixo, guitarra, piano e outros — limpo, na sua GPU." },
+    "feat.c2t": { en: "A fader per instrument", pt: "Um fader por instrumento" },
+    "feat.c2d": { en: "Volume, mute and solo on every channel, with a live level meter and a master — mix it exactly how you want.", pt: "Volume, mudo e solo em cada canal, com medidor de nível ao vivo e um master — mixe exatamente do seu jeito." },
+    "feat.c3t": { en: "Transpose &amp; time-stretch", pt: "Transpor e mudar o andamento" },
+    "feat.c3d": { en: "Change the key and the tempo independently, in real time. Drop it a step, slow it to half-speed to learn a part.", pt: "Mude o tom e o andamento de forma independente, em tempo real. Abaixe um tom, reduza pra metade pra aprender um trecho." },
+    "feat.c4t": { en: "A–B loop &amp; count-in", pt: "Loop A–B e contagem" },
+    "feat.c4d": { en: "Set two points and loop a hard section until it sticks, with a one-bar count-in before playback.", pt: "Marque dois pontos e repita um trecho difícil até acertar, com uma contagem de um compasso antes de tocar." },
+    "feat.c5t": { en: "Record along", pt: "Grave junto" },
+    "feat.c5d": { en: "Add a track, arm it, and play over the stems. Your take is captured in sync and sits right in the mixer.", pt: "Adicione uma faixa, arme e toque por cima dos stems. Sua gravação entra sincronizada, direto no mixer." },
+    "feat.c6t": { en: "Stage mode", pt: "Modo palco" },
+    "feat.c6d": { en: "A full-screen, big-button player for playing live — big Prev / Play / Next, key &amp; tempo, and a song list.", pt: "Um player em tela cheia com botões grandes pra tocar ao vivo — Anterior / Play / Próxima, tom e andamento, e a lista de músicas." },
+    "feat.c7t": { en: "Chords &amp; synced lyrics", pt: "Acordes e letra sincronizada" },
+    "feat.c7d": { en: "Chord-per-beat and time-synced lyrics scroll as the song plays — and transpose right along with the key.", pt: "Acorde por tempo e letra sincronizada rolam junto com a música — e transpõem junto com o tom." },
+    "feat.c8t": { en: "Export it", pt: "Exporte" },
+    "feat.c8d": { en: "Bounce your mix or every isolated stem to MP3, WAV, FLAC and more — including a click/practice split.", pt: "Exporte sua mix ou cada stem isolado em MP3, WAV, FLAC e mais — incluindo uma versão com clique pra ensaio." },
+    "how.tag": { en: "◢ How it runs", pt: "◢ Como roda" },
+    "how.h2": { en: "It all happens on your machine.", pt: "Tudo acontece no seu computador." },
+    "how.p": { en: "FullBand is a small local engine plus a mixer. The engine (Demucs on your GPU) does the heavy separation; the mixer runs in your browser or as a native Windows app. There's no cloud step, no upload, and no account — the song never leaves your computer.", pt: "O FullBand é um pequeno motor local mais um mixer. O motor (Demucs na sua GPU) faz a separação pesada; o mixer roda no navegador ou como app nativo do Windows. Sem nuvem, sem upload e sem conta — a música nunca sai do seu computador." },
+    "how.b1": { en: "No cloud", pt: "Sem nuvem" },
+    "how.b2": { en: "No upload", pt: "Sem upload" },
+    "how.b3": { en: "No account", pt: "Sem conta" },
+    "how.b4": { en: "No ads", pt: "Sem anúncios" },
+    "how.b5": { en: "Open source", pt: "Código aberto" },
+    "how.s1": { en: 'Clone the repo from GitHub — or download the ZIP (green <b>Code ▸ Download ZIP</b>).', pt: 'Clone o repositório do GitHub — ou baixe o ZIP (botão verde <b>Code ▸ Download ZIP</b>).' },
+    "how.s2": { en: 'Run <code>setup.bat</code> — one command installs Python, the AI model, ffmpeg and the UI.', pt: 'Rode o <code>setup.bat</code> — um comando instala Python, o modelo de IA, o ffmpeg e a interface.' },
+    "how.s3": { en: 'Run <code>run.bat</code> — FullBand opens at <code>localhost:8000</code> (or launch the desktop app).', pt: 'Rode o <code>run.bat</code> — o FullBand abre em <code>localhost:8000</code> (ou abra o app de desktop).' },
+    "how.s4": { en: 'Paste a link, hit <b>Separate</b>, and start mixing.', pt: 'Cole um link, clique em <b>Separate</b> e comece a mixar.' },
+    "sup.tag": { en: "◢ Keep it free", pt: "◢ Mantenha grátis" },
+    "sup.h2": { en: "No ads. No accounts. No subscription.", pt: "Sem anúncios. Sem contas. Sem assinatura." },
+    "sup.p": { en: "FullBand is free and open source, and it'll stay that way. If it helped you learn a solo, nail a set, or just mess around with your favourite songs, a coffee keeps the lights on.", pt: "O FullBand é grátis e de código aberto, e vai continuar assim. Se te ajudou a tirar um solo, mandar bem num show ou só brincar com suas músicas favoritas, um café ajuda a manter tudo de pé." },
+    "sup.cta": { en: "☕ Buy me a coffee", pt: "☕ Me pague um café" },
+    "foot.tag": { en: "Runs locally. No trackers, no cloud, no account.", pt: "Roda localmente. Sem rastreadores, sem nuvem, sem conta." },
+    "foot.epic": { en: 'An <span style="color:var(--muted)">Epicdev</span> project', pt: 'Um projeto <span style="color:var(--muted)">Epicdev</span>' }
+  };
+  const TITLES = { en: "FullBand — turn any song into a full mixer", pt: "FullBand — transforme qualquer música num mixer completo" };
+  function applyLang(lang) {
+    if (lang !== "pt") lang = "en";
+    document.documentElement.lang = lang === "pt" ? "pt-BR" : "en";
+    document.title = TITLES[lang];
+    document.querySelectorAll("[data-i18n]").forEach((el) => {
+      const t = I18N[el.getAttribute("data-i18n")];
+      if (t && t[lang] != null) el.innerHTML = t[lang];
+    });
+    document.querySelectorAll("#lang button").forEach((b) => b.classList.toggle("active", b.dataset.lang === lang));
+    try { localStorage.setItem("fb-lang", lang); } catch (e) {}
+  }
+  document.querySelectorAll("#lang button").forEach((b) => b.addEventListener("click", () => applyLang(b.dataset.lang)));
+  (function () {
+    let l = null;
+    try { l = localStorage.getItem("fb-lang"); } catch (e) {}
+    if (!l) l = (navigator.language || "").toLowerCase().startsWith("pt") ? "pt" : "en";
+    applyLang(l);
+  })();
+
   // ---- build the mixer mockup lanes with animated waveforms ----
   const LANES = [
     { name:"Drums",  tag:"DRM", cap:"#5fb0ff", fader:78, seed:3 },
